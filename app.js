@@ -42,6 +42,8 @@
   const dayKey = (ms) => localInputValue(ms).slice(0, 10);
   const fmtDate = (ms) => new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
   const fmtShortDay = (ms) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const fmtTime = (ms) => new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const fmtDay = (key) => new Date(`${key}T00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
   const fmtHours = (h) => `${h.toFixed(1)} h`;
   const fmtHM = (ms) => `${Math.floor(ms / HOUR)}h ${pad(Math.floor((ms % HOUR) / 60000))}m`;
   const fmtClock = (ms) => {
@@ -141,6 +143,7 @@
   }
 
   const RING_C = 2 * Math.PI * 90;
+  const DIAL = 24 * HOUR; // the ring is a 24 h dial; longer fasts wrap around it
 
   function setRing(fraction) {
     $('#fast-ring').style.strokeDashoffset = String(RING_C * (1 - Math.min(1, Math.max(0, fraction))));
@@ -150,6 +153,7 @@
     const goalHours = setting('goalHours');
     const goalMs = goalHours * HOUR;
     const start = setting('activeFast');
+    $('#fast-goal-tick').style.transform = `rotate(${(goalMs / DIAL) * 360}deg)`;
     if (!start) {
       $('#fast-elapsed').textContent = '--:--:--';
       setRing(0);
@@ -157,10 +161,11 @@
       return;
     }
     const elapsed = Date.now() - start;
+    const dialPos = elapsed % DIAL;
+    setRing(dialPos === 0 && elapsed > 0 ? 1 : dialPos / DIAL);
     $('#fast-elapsed').textContent = fmtClock(elapsed);
-    setRing(elapsed / goalMs);
     $('#fast-goal').textContent = elapsed >= goalMs
-      ? `Goal of ${goalHours} h reached`
+      ? `Goal of ${goalHours} h reached · +${fmtHM(elapsed - goalMs)}`
       : `${fmtClock(goalMs - elapsed)} to go for ${goalHours} h`;
   }
 
@@ -252,29 +257,75 @@
       ? `Today (${todays.length} meals): ${Math.round(t.kcal)} kcal · P ${Math.round(t.protein)} g · C ${Math.round(t.carbs)} g · F ${Math.round(t.fat)} g`
       : 'Nothing logged today yet.';
 
-    const list = $('#meal-list');
-    list.replaceChildren();
-    if (!data.meals.length) list.append(el('li', 'muted small', 'No meals logged yet.'));
+    renderDiary();
+  }
 
-    for (const m of data.meals) {
-      const body = el('div', 'item-body');
-      body.append(el('strong', null, m.name), el('div', 'muted small', fmtDate(m.when)), el('div', null, macroLine(m)));
-      if (m.notes) body.append(el('div', 'muted small', m.notes));
+  // Day-by-day timeline: meals and fasts in the order they happened, newest day first
+  function renderDiary() {
+    const box = $('#diary');
+    box.replaceChildren();
+    const events = [
+      ...data.meals.map((m) => ({ type: 'meal', t: m.when, item: m })),
+      ...data.fasts.map((f) => ({ type: 'fast', t: f.start, item: f })),
+    ].sort((a, b) => a.t - b.t);
 
-      const li = el('li', 'item');
-      if (m.photo) {
-        const url = URL.createObjectURL(m.photo);
-        objectUrls.push(url);
-        const img = el('img', 'thumb');
-        img.src = url;
-        img.alt = m.name;
-        li.append(img);
-      }
-      const del = el('button', 'ghost small', 'Delete');
-      del.onclick = () => removeRecord('meals', m.id, 'meal');
-      li.append(body, del);
-      list.append(li);
+    if (!events.length) {
+      box.append(el('p', 'muted small', 'Nothing logged yet. Log a meal or finish a fast to start your diary.'));
+      return;
     }
+
+    const days = new Map();
+    for (const e of events) {
+      const key = dayKey(e.t);
+      if (!days.has(key)) days.set(key, []);
+      days.get(key).push(e);
+    }
+
+    for (const [day, evs] of [...days].reverse()) {
+      const meals = evs.filter((e) => e.type === 'meal').map((e) => e.item);
+      const totals = sumMacros(meals);
+      const head = el('div', 'day-head');
+      head.append(
+        el('strong', null, fmtDay(day)),
+        el('span', 'muted small', `${meals.length} meal${meals.length === 1 ? '' : 's'} · ${Math.round(totals.kcal)} kcal`),
+      );
+      const timeline = el('ol', 'timeline');
+      for (const e of evs) timeline.append(e.type === 'meal' ? mealRow(e.item) : fastRow(e.item));
+      const section = el('section', 'day');
+      section.append(head, timeline);
+      box.append(section);
+    }
+  }
+
+  function mealRow(m) {
+    const body = el('div', 'entry-body');
+    body.append(el('strong', null, m.name), el('div', 'muted small', macroLine(m)));
+    if (m.notes) body.append(el('div', 'muted small', m.notes));
+    if (m.photo) {
+      const url = URL.createObjectURL(m.photo);
+      objectUrls.push(url);
+      const img = el('img', 'thumb');
+      img.src = url;
+      img.alt = m.name;
+      body.append(img);
+    }
+    const del = el('button', 'ghost small icon-btn', '×');
+    del.setAttribute('aria-label', 'Delete meal');
+    del.onclick = () => removeRecord('meals', m.id, 'meal');
+    const li = el('li', 'entry meal');
+    li.append(el('span', 'entry-time', fmtTime(m.when)), body, del);
+    return li;
+  }
+
+  function fastRow(f) {
+    const body = el('div', 'entry-body');
+    body.append(el('strong', null, `Fasted ${fmtHM(f.end - f.start)}`), el('div', 'muted small', `until ${fmtTime(f.end)}`));
+    const del = el('button', 'ghost small icon-btn', '×');
+    del.setAttribute('aria-label', 'Delete fast');
+    del.onclick = () => removeRecord('fasts', f.id, 'fast');
+    const li = el('li', 'entry fast');
+    li.append(el('span', 'entry-time', fmtTime(f.start)), body, del);
+    return li;
   }
 
   $('#meal-form').onsubmit = safe(async (e) => {

@@ -38,6 +38,7 @@
             <circle class="ring-track" cx="100" cy="100" r="90"/>
             <circle id="fast-ring" class="ring-fill" cx="100" cy="100" r="90"
                     transform="rotate(-90 100 100)"/>
+            <line id="fast-goal-tick" class="ring-tick" x1="100" y1="2" x2="100" y2="20"/>
           </svg>
           <div class="ring-label">
             <div id="fast-elapsed" class="big">--:--:--</div>
@@ -89,7 +90,8 @@
       </form>
 
       <div id="today-totals" class="totals"></div>
-      <ul id="meal-list" class="list"></ul>
+      <div class="section-head"><h2>Day log</h2></div>
+      <div id="diary"></div>
     </section>
 
     <!-- WEIGHT -->

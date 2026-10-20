@@ -342,6 +342,79 @@ button.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
 
 .chart { position: relative; height: 240px; width: 100%; }
 
+/* ---------- fasting goal tick ---------- */
+.ring-tick {
+  stroke: var(--warn);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transform-origin: 100px 100px;
+  transform-box: view-box;
+}
+
+/* ---------- day log ---------- */
+.day { margin-bottom: 14px; }
+
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 4px 8px;
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 10px;
+  align-items: start;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+
+.entry-time {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+
+.entry-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.entry .icon-btn {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--muted);
+}
+.entry-body .thumb { margin-top: 6px; width: 100%; height: auto; max-height: 180px; }
+
+/* a fast sits between meals: dashed, muted, so meals stand out */
+.entry.fast {
+  background: transparent;
+  box-shadow: none;
+  border-style: dashed;
+  padding: 10px 12px;
+}
+
+.entry.fast .entry-body strong { color: var(--accent-strong); }
+.entry.fast .entry-time { color: var(--accent-strong); }
+.entry.meal { border-left: 3px solid var(--accent); }
+
 /* ---------- wider screens ---------- */
 @media (min-width: 760px) {
   .tabbar {
