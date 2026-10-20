@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MealFast</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>MealFast</h1>
+    <span id="storage-status" class="muted small"></span>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="fast">Fast</button>
+    <button class="tab" data-tab="meals">Meals</button>
+    <button class="tab" data-tab="weight">Weight</button>
+    <button class="tab" data-tab="analysis">Analysis</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </nav>
+
+  <main>
+    <!-- FAST -->
+    <section id="tab-fast" class="panel">
+      <div class="card timer">
+        <div id="fast-status" class="status">Not fasting</div>
+        <div id="fast-elapsed" class="big">--:--:--</div>
+        <progress id="fast-progress" max="100" value="0"></progress>
+        <div id="fast-goal" class="muted"></div>
+
+        <div id="fast-idle" class="stack">
+          <label>Meal ended at <span class="muted small">(blank = now)</span>
+            <input type="datetime-local" id="fast-start-input">
+          </label>
+          <button id="btn-start-fast" class="primary big-btn">I finished eating</button>
+        </div>
+
+        <div id="fast-active" class="stack" hidden>
+          <label>I'm eating at <span class="muted small">(blank = now)</span>
+            <input type="datetime-local" id="fast-end-input">
+          </label>
+          <button id="btn-end-fast" class="primary big-btn">Break fast</button>
+          <button id="btn-cancel-fast" class="ghost">Cancel this fast</button>
+        </div>
+      </div>
+
+      <h2>Recent fasts</h2>
+      <ul id="fast-list" class="list"></ul>
+    </section>
+
+    <!-- MEALS -->
+    <section id="tab-meals" class="panel" hidden>
+      <form id="meal-form" class="card form">
+        <h2>Log a meal</h2>
+        <label>When <span class="muted small">(blank = now)</span>
+          <input type="datetime-local" name="when">
+        </label>
+        <label>Meal
+          <input name="mealName" required placeholder="e.g. Chicken rice">
+        </label>
+        <div class="grid4">
+          <label>kcal <input type="number" name="kcal" min="0" step="1" inputmode="numeric"></label>
+          <label>Protein g <input type="number" name="protein" min="0" step="0.1" inputmode="decimal"></label>
+          <label>Carbs g <input type="number" name="carbs" min="0" step="0.1" inputmode="decimal"></label>
+          <label>Fat g <input type="number" name="fat" min="0" step="0.1" inputmode="decimal"></label>
+        </div>
+        <label>Photo
+          <input type="file" name="photo" accept="image/*" capture="environment">
+        </label>
+        <label>Notes <input name="notes"></label>
+        <button class="primary" type="submit">Save meal</button>
+      </form>
+
+      <div id="today-totals" class="muted totals"></div>
+      <ul id="meal-list" class="list"></ul>
+    </section>
+
+    <!-- WEIGHT -->
+    <section id="tab-weight" class="panel" hidden>
+      <form id="weight-form" class="card form">
+        <h2>Log weight</h2>
+        <label>When <span class="muted small">(blank = now)</span>
+          <input type="datetime-local" name="when">
+        </label>
+        <label>Weight <span id="weight-unit" class="muted small"></span>
+          <input type="number" name="weight" min="1" step="0.1" required inputmode="decimal">
+        </label>
+        <button class="primary" type="submit">Save weight</button>
+      </form>
+
+      <h2>History</h2>
+      <ul id="weight-list" class="list"></ul>
+    </section>
+
+    <!-- ANALYSIS -->
+    <section id="tab-analysis" class="panel" hidden>
+      <div class="row between">
+        <h2>Analysis</h2>
+        <select id="range" aria-label="Date range">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last year</option>
+          <option value="0">All time</option>
+        </select>
+      </div>
+
+      <div id="stats" class="stats"></div>
+
+      <div class="card">
+        <h3>Insights</h3>
+        <ul id="insights" class="plain"></ul>
+      </div>
+
+      <div class="card">
+        <h3>Fasting length</h3>
+        <div class="chart"><canvas id="chart-fasts"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Weight</h3>
+        <div class="chart"><canvas id="chart-weight"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Calories per day</h3>
+        <div class="chart"><canvas id="chart-calories"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Macros per day (g)</h3>
+        <div class="chart"><canvas id="chart-macros"></canvas></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="panel" hidden>
+      <div class="card form">
+        <h2>Goals</h2>
+        <label>Fasting goal
+          <select id="set-goal">
+            <option value="12">12 hours</option>
+            <option value="14">14 hours</option>
+            <option value="16">16 hours</option>
+            <option value="18">18 hours</option>
+            <option value="20">20 hours</option>
+            <option value="24">24 hours</option>
+          </select>
+        </label>
+        <label>Daily calorie target (kcal)
+          <input type="number" id="set-calories" min="0" step="50" inputmode="numeric">
+        </label>
+        <label>Weight unit
+          <select id="set-unit">
+            <option value="kg">kg</option>
+            <option value="lb">lb</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="card form">
+        <h2>Backup</h2>
+        <p class="muted small">
+          Your data lives only in this browser. Export a backup regularly, and before clearing
+          site data or switching devices.
+        </p>
+        <button id="btn-export" class="primary">Export backup (.json)</button>
+        <label>Restore from backup
+          <input type="file" id="import-file" accept="application/json,.json">
+        </label>
+        <button id="btn-clear" class="danger">Delete all data in this browser</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
