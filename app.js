@@ -121,7 +121,11 @@
 
   // ---------- tabs ----------
   function showTab(name) {
-    $$('.tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+    $$('.tab').forEach((b) => {
+      const on = b.dataset.tab === name;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', String(on));
+    });
     $$('.panel').forEach((p) => { p.hidden = p.id !== `tab-${name}`; });
     if (name === 'analysis') renderAnalysis();
   }
@@ -136,19 +140,25 @@
     tickFast();
   }
 
+  const RING_C = 2 * Math.PI * 90;
+
+  function setRing(fraction) {
+    $('#fast-ring').style.strokeDashoffset = String(RING_C * (1 - Math.min(1, Math.max(0, fraction))));
+  }
+
   function tickFast() {
     const goalHours = setting('goalHours');
     const goalMs = goalHours * HOUR;
     const start = setting('activeFast');
     if (!start) {
       $('#fast-elapsed').textContent = '--:--:--';
-      $('#fast-progress').value = 0;
+      setRing(0);
       $('#fast-goal').textContent = `Goal: ${goalHours} h`;
       return;
     }
     const elapsed = Date.now() - start;
     $('#fast-elapsed').textContent = fmtClock(elapsed);
-    $('#fast-progress').value = Math.min(100, (elapsed / goalMs) * 100);
+    setRing(elapsed / goalMs);
     $('#fast-goal').textContent = elapsed >= goalMs
       ? `Goal of ${goalHours} h reached`
       : `${fmtClock(goalMs - elapsed)} to go for ${goalHours} h`;
