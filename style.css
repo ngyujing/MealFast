@@ -410,6 +410,47 @@ button.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
   transform-box: view-box;
 }
 
+/* ---------- meal library and suggestions ---------- */
+.library summary { font-weight: 700; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.library[open] { padding-bottom: 12px; }
+.library #library-list { margin-top: 12px; max-height: 360px; overflow-y: auto; }
+
+.suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: -6px;
+}
+
+.suggest-item,
+.library .item { cursor: pointer; }
+
+.suggest-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  width: 100%;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.suggest-item small { color: var(--muted); font-weight: 500; }
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 /* ---------- meal prompt after breaking a fast ---------- */
 .prompt {
   margin: -4px 0 0;

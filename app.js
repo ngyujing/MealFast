@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '6';
+  const APP_VERSION = '7';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -369,6 +369,103 @@
     f.reset();
     $('#meal-prompt').hidden = true;
     await refresh();
+  });
+
+  // ---------- meal library and suggestions ----------
+  // Library = saved meals ("My meals") plus each distinct past meal name, newest values first.
+  function savedMeals() {
+    return data.settings.savedMeals || [];
+  }
+
+  function mealLibrary() {
+    const saved = savedMeals().map((m) => ({ ...m, source: 'saved' }));
+    const seen = new Set(saved.map((m) => m.name.toLowerCase()));
+    const logged = [];
+    for (const m of data.meals) { // data.meals is newest first
+      const key = m.name.trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      logged.push({ name: m.name, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat, source: 'logged' });
+    }
+    return [...saved, ...logged];
+  }
+
+  function fillMealForm(item) {
+    const f = $('#meal-form');
+    f.mealName.value = item.name;
+    f.kcal.value = item.kcal ?? '';
+    f.protein.value = item.protein ?? '';
+    f.carbs.value = item.carbs ?? '';
+    f.fat.value = item.fat ?? '';
+    $('#meal-suggest').hidden = true;
+    f.mealName.focus();
+  }
+
+  function renderSuggestions() {
+    const box = $('#meal-suggest');
+    const q = $('#meal-form').mealName.value.trim().toLowerCase();
+    box.replaceChildren();
+    const hits = q ? mealLibrary().filter((m) => m.name.toLowerCase().includes(q)).slice(0, 6) : [];
+    box.hidden = !hits.length;
+    for (const item of hits) {
+      const btn = el('button', 'suggest-item');
+      btn.type = 'button';
+      btn.append(
+        el('span', null, item.name),
+        el('small', null, `${item.source === 'saved' ? 'My meal' : 'Logged'} · ${macroLine(item)}`),
+      );
+      btn.onclick = () => fillMealForm(item);
+      box.append(btn);
+    }
+  }
+
+  function renderLibrary() {
+    const list = $('#library-list');
+    list.replaceChildren();
+    const items = mealLibrary();
+    if (!items.length) list.append(el('li', 'muted small', 'Saved and past meals will appear here.'));
+    for (const item of items) {
+      const body = el('div', 'item-body');
+      const title = el('strong', null, item.name);
+      if (item.source === 'saved') title.append(el('span', 'tag', 'My meal'));
+      body.append(title, el('div', 'muted small', macroLine(item)));
+      const li = el('li', 'item');
+      li.append(body);
+      li.onclick = () => fillMealForm(item);
+      if (item.source === 'saved') {
+        const del = el('button', 'ghost small icon-btn', '×');
+        del.setAttribute('aria-label', 'Delete saved meal');
+        del.onclick = safe(async (e) => {
+          e.stopPropagation();
+          if (!confirm(`Delete "${item.name}" from My meals?`)) return;
+          await saveSetting('savedMeals', savedMeals().filter((m) => m.id !== item.id));
+          renderAll();
+        });
+        li.append(del);
+      }
+      list.append(li);
+    }
+    renderSuggestions();
+  }
+
+  $('#meal-form').mealName.oninput = renderSuggestions;
+
+  $('#btn-save-template').onclick = safe(async () => {
+    const f = $('#meal-form');
+    const name = f.mealName.value.trim();
+    if (!name) return alert('Type a meal name first.');
+    const item = {
+      id: uid(),
+      name,
+      kcal: numOrNull(f.kcal.value),
+      protein: numOrNull(f.protein.value),
+      carbs: numOrNull(f.carbs.value),
+      fat: numOrNull(f.fat.value),
+    };
+    const others = savedMeals().filter((m) => m.name.toLowerCase() !== name.toLowerCase());
+    await saveSetting('savedMeals', [...others, item]);
+    $('#template-status').textContent = `"${name}" saved to My meals.`;
+    renderAll();
   });
 
   // ---------- AI photo estimate ----------
@@ -838,6 +935,7 @@
   function renderAll() {
     renderFast();
     renderMeals();
+    renderLibrary();
     renderWeights();
     renderSettings();
     if (!$('#tab-analysis').hidden) renderAnalysis();

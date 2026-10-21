@@ -21,7 +21,7 @@
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
     } catch (e) { /* storage blocked: follow the system theme */ }
   </script>
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <header class="topbar">
@@ -83,6 +83,11 @@
 
     <!-- MEALS -->
     <section id="tab-meals" class="panel" hidden>
+      <details class="card library">
+        <summary>My meals &amp; history</summary>
+        <ul id="library-list" class="list"></ul>
+      </details>
+
       <form id="meal-form" class="card form">
         <h2>Log a meal</h2>
         <p id="meal-prompt" class="prompt" hidden>Fast ended. What did you eat?</p>
@@ -90,8 +95,9 @@
           <input type="datetime-local" name="when">
         </label>
         <label>Meal
-          <input name="mealName" required placeholder="e.g. Chicken rice">
+          <input name="mealName" required placeholder="e.g. Chicken rice" autocomplete="off">
         </label>
+        <div id="meal-suggest" class="suggest" hidden></div>
         <div class="grid4">
           <label>kcal <input type="number" name="kcal" min="0" step="1" inputmode="numeric"></label>
           <label>Protein g <input type="number" name="protein" min="0" step="0.1" inputmode="decimal"></label>
@@ -104,7 +110,9 @@
         <button type="button" id="btn-estimate" hidden>Estimate from photo</button>
         <p id="estimate-status" class="muted small"></p>
         <label>Notes <input name="notes"></label>
-        <button class="primary big-btn" type="submit">Save meal</button>
+        <button class="primary big-btn" type="submit">Log meal</button>
+        <button type="button" id="btn-save-template" class="ghost">Save this meal to My meals</button>
+        <p id="template-status" class="muted small"></p>
       </form>
 
       <div id="today-totals" class="totals"></div>
@@ -252,6 +260,6 @@
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
