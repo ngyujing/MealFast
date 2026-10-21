@@ -5,7 +5,7 @@ Everything runs in the browser; there is no server and no account.
 
 ## Features
 
-- **Fast tab**: tap *I finished eating* to start the timer, *Break fast* to save the fast.
+- **Fast tab**: tap *I finished eating* to start the timer, *I'm gonna eat* to save the fast.
   Optional time fields let you enter a meal end or eating time you forgot to log.
 - **Meals tab**: log name, kcal, protein, carbs and fat, plus an optional photo.
   Photos are shrunk to 1024 px before saving to keep storage small.
