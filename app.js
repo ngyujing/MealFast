@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '15';
+  const APP_VERSION = '16';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -495,7 +495,6 @@
   // Cooking styles add an estimated amount of cooking oil (grams per 100 g of food).
   // Oil is 884 kcal per 100 g and all fat. Rough estimates, not measured values.
   const COOKING = [
-    { key: 'plain', label: 'Plain', oil: 0 },
     { key: 'boiled', label: 'Boiled / steamed', oil: 0 },
     { key: 'poached', label: 'Poached', oil: 0 },
     { key: 'stewed', label: 'Stewed / braised', oil: 0.5 },
