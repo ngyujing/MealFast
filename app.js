@@ -5,6 +5,8 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
+  const APP_VERSION = '3'; // bump with each release; also bump ?v= in index.html
+  const PULL_THRESHOLD = 70;
   const DEFAULTS = { goalHours: 16, unit: 'kg', calorieTarget: 2000, activeFast: null };
   const COLORS = {
     accent: '#2f855a',
@@ -654,6 +656,57 @@
     await refresh();
   });
 
+  // ---------- refresh ----------
+  // Reloads the app after asking the service worker to check for a new version.
+  // Stored data lives in IndexedDB and survives the reload.
+  async function reloadApp() {
+    try {
+      const reg = await navigator.serviceWorker?.getRegistration();
+      await reg?.update();
+    } catch {
+      // offline: reload will use the cached copy
+    }
+    location.reload();
+  }
+
+  // iPhone home-screen apps have no pull-to-refresh, so provide one
+  function bindPullToRefresh() {
+    const ptr = $('#ptr');
+    const HIDDEN = -56;
+    let startY = null;
+    let dy = 0;
+
+    const place = (y, animate) => {
+      ptr.style.transition = animate ? 'transform 0.2s ease' : 'none';
+      ptr.style.transform = `translate(-50%, ${y}px)`;
+    };
+
+    window.addEventListener('touchstart', (e) => {
+      startY = window.scrollY <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null;
+      dy = 0;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (startY == null) return;
+      dy = Math.max(0, e.touches[0].clientY - startY);
+      if (dy === 0) return;
+      place(HIDDEN + Math.min(dy, 120) * 0.5, false);
+      ptr.textContent = dy > PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh';
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+      if (startY != null && dy > PULL_THRESHOLD) {
+        ptr.textContent = 'Refreshing…';
+        place(0, true);
+        reloadApp();
+      } else {
+        place(HIDDEN, true);
+      }
+      startY = null;
+      dy = 0;
+    }, { passive: true });
+  }
+
   // ---------- wiring ----------
   function renderAll() {
     renderFast();
@@ -676,6 +729,12 @@
     $$('.tab').forEach((btn) => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
     $('#range').onchange = renderAnalysis;
     bindSettings();
+    $('#btn-refresh').onclick = reloadApp;
+    bindPullToRefresh();
+    $('#app-version').textContent = APP_VERSION;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
     await refresh();
     setInterval(tickFast, 1000);
     await navigator.storage?.persist?.();

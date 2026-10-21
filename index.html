@@ -14,7 +14,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <header class="topbar">
@@ -24,7 +24,11 @@
         <h1>MealFast</h1>
         <span id="storage-status" class="muted small"></span>
       </div>
+      <button id="btn-refresh" class="refresh-btn" aria-label="Refresh app">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg>
+      </button>
     </div>
+    <div id="ptr" class="ptr" aria-hidden="true">Pull to refresh</div>
   </header>
 
   <main>
@@ -187,6 +191,11 @@
         </label>
         <button id="btn-clear" class="danger big-btn">Delete all data in this browser</button>
       </div>
+
+      <div class="card form">
+        <h2>About</h2>
+        <p class="muted small">MealFast version <span id="app-version"></span>. If a change is missing, pull down or tap the refresh button at the top.</p>
+      </div>
     </section>
   </main>
 
@@ -215,6 +224,6 @@
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
