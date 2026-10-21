@@ -21,7 +21,7 @@
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
     } catch (e) { /* storage blocked: follow the system theme */ }
   </script>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <header class="topbar">
@@ -89,7 +89,12 @@
       </details>
 
       <form id="meal-form" class="card form">
-        <h2>Log a meal</h2>
+        <div class="form-head">
+          <h2>Log a meal</h2>
+          <button type="button" id="btn-clear-meal" class="top-btn" aria-label="Clear all fields">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
         <p id="meal-prompt" class="prompt" hidden>Fast ended. What did you eat?</p>
         <label>When <span class="muted small">(blank = now)</span>
           <input type="datetime-local" name="when">
@@ -260,6 +265,6 @@
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

@@ -410,6 +410,9 @@ button.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
   transform-box: view-box;
 }
 
+.form-head { display: flex; align-items: center; gap: 8px; }
+.form-head .top-btn { margin-left: auto; width: 36px; height: 36px; min-height: 36px; }
+
 /* ---------- meal library and suggestions ---------- */
 .library summary { font-weight: 700; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
 .library[open] { padding-bottom: 12px; }

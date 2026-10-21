@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '7';
+  const APP_VERSION = '8';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -449,6 +449,15 @@
   }
 
   $('#meal-form').mealName.oninput = renderSuggestions;
+
+  $('#btn-clear-meal').onclick = () => {
+    $('#meal-form').reset(); // also clears the photo and the time
+    $('#meal-prompt').hidden = true;
+    $('#meal-suggest').hidden = true;
+    $('#template-status').textContent = '';
+    $('#estimate-status').textContent = '';
+    refreshEstimateUi();
+  };
 
   $('#btn-save-template').onclick = safe(async () => {
     const f = $('#meal-form');
