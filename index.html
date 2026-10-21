@@ -21,7 +21,7 @@
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
     } catch (e) { /* storage blocked: follow the system theme */ }
   </script>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <header class="topbar">
@@ -101,6 +101,8 @@
         <label>Photo
           <input type="file" name="photo" accept="image/*" capture="environment">
         </label>
+        <button type="button" id="btn-estimate" hidden>Estimate from photo</button>
+        <p id="estimate-status" class="muted small"></p>
         <label>Notes <input name="notes"></label>
         <button class="primary big-btn" type="submit">Save meal</button>
       </form>
@@ -204,6 +206,21 @@
       </div>
 
       <div class="card form">
+        <h2>AI meal estimate</h2>
+        <p class="muted small">
+          Paste an Anthropic API key to estimate calories and macros from a meal photo.
+          The key is stored only in this browser and sent only to Anthropic. Estimates are
+          approximate, so check them before saving.
+        </p>
+        <label>API key
+          <input type="password" id="ai-key" autocomplete="off" placeholder="sk-ant-...">
+        </label>
+        <button id="btn-ai-save" class="primary big-btn">Save key</button>
+        <button id="btn-ai-clear" class="ghost">Remove key</button>
+        <p id="ai-status" class="muted small"></p>
+      </div>
+
+      <div class="card form">
         <h2>About</h2>
         <p class="muted small">MealFast version <span id="app-version"></span>. If a change is missing, pull down or tap the refresh button at the top.</p>
       </div>
@@ -235,6 +252,6 @@
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

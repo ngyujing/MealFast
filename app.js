@@ -5,7 +5,15 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '4'; // bump with each release; also bump ?v= in index.html
+  const APP_VERSION = '5';
+  const AI_MODEL = 'claude-sonnet-5-5';
+  const ESTIMATE_PROMPT = [
+    'Estimate the nutrition of the meal in this photo.',
+    'Identify the foods, judge the portion sizes, and total the calories and macros for the whole plate.',
+    'Reply with only a JSON object, no other text, in this shape:',
+    '{"name": string, "kcal": number, "protein_g": number, "carbs_g": number, "fat_g": number, "confidence": "low" | "medium" | "high", "notes": string}',
+    'Keep notes to one short sentence about the main assumptions.',
+  ].join(' '); // bump with each release; also bump ?v= in index.html
   const PULL_THRESHOLD = 70;
   const DEFAULTS = { goalHours: 16, unit: 'kg', calorieTarget: 2000, activeFast: null };
   const COLORS = {
@@ -362,6 +370,99 @@
     $('#meal-prompt').hidden = true;
     await refresh();
   });
+
+  // ---------- AI photo estimate ----------
+  // The key lives in this browser only; the request goes straight to Anthropic.
+  function aiKey() {
+    try { return localStorage.getItem('mealfast-ai-key') || ''; } catch { return ''; }
+  }
+
+  function setAiKey(value) {
+    try {
+      if (value) localStorage.setItem('mealfast-ai-key', value);
+      else localStorage.removeItem('mealfast-ai-key');
+    } catch { /* storage blocked */ }
+  }
+
+  async function estimateMeal(file) {
+    const blob = await shrinkImage(file, 768);
+    const data = (await blobToDataUrl(blob)).split(',')[1];
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': aiKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 400,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } },
+            { type: 'text', text: ESTIMATE_PROMPT },
+          ],
+        }],
+      }),
+    });
+    if (res.status === 401) throw new Error('The API key was rejected. Check it in Settings.');
+    if (!res.ok) throw new Error(`The estimate failed (error ${res.status}).`);
+    const body = await res.json();
+    const text = body.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('The estimate could not be read. Try a clearer photo.');
+    return JSON.parse(match[0]);
+  }
+
+  function refreshEstimateUi() {
+    const f = $('#meal-form');
+    const hasPhoto = Boolean(f.photo.files[0]);
+    $('#btn-estimate').hidden = !(hasPhoto && aiKey());
+    $('#ai-status').textContent = aiKey()
+      ? 'A key is saved in this browser.'
+      : 'No key saved. Photo estimates are off.';
+  }
+
+  $('#meal-form').photo.onchange = refreshEstimateUi;
+
+  $('#btn-estimate').onclick = safe(async () => {
+    const f = $('#meal-form');
+    const file = f.photo.files[0];
+    if (!file) return;
+    $('#btn-estimate').disabled = true;
+    $('#estimate-status').textContent = 'Estimating...';
+    try {
+      const est = await estimateMeal(file);
+      if (!f.mealName.value.trim() && est.name) f.mealName.value = est.name;
+      f.kcal.value = Math.round(est.kcal);
+      f.protein.value = Math.round(est.protein_g * 10) / 10;
+      f.carbs.value = Math.round(est.carbs_g * 10) / 10;
+      f.fat.value = Math.round(est.fat_g * 10) / 10;
+      const label = `AI estimate, ${est.confidence} confidence${est.notes ? `: ${est.notes}` : ''}`;
+      f.notes.value = [f.notes.value.trim(), label].filter(Boolean).join(' · ');
+      $('#estimate-status').textContent = 'Filled in. Check the numbers before saving.';
+    } catch (err) {
+      $('#estimate-status').textContent = err.message;
+    } finally {
+      $('#btn-estimate').disabled = false;
+    }
+  });
+
+  $('#btn-ai-save').onclick = safe(async () => {
+    const value = $('#ai-key').value.trim();
+    if (!value) return alert('Paste your API key first.');
+    setAiKey(value);
+    $('#ai-key').value = '';
+    refreshEstimateUi();
+  });
+
+  $('#btn-ai-clear').onclick = () => {
+    if (!confirm('Remove the saved API key from this browser?')) return;
+    setAiKey('');
+    refreshEstimateUi();
+  };
 
   // ---------- weight ----------
   const toUnit = (kg) => (setting('unit') === 'lb' ? kg * LB_PER_KG : kg);
@@ -759,6 +860,7 @@
     bindTheme();
     bindPullToRefresh();
     $('#app-version').textContent = APP_VERSION;
+    refreshEstimateUi();
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
