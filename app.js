@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '13';
+  const APP_VERSION = '14';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -502,12 +502,21 @@
     { key: 'smoked', label: 'Smoked', oil: 0 },
     { key: 'grilled', label: 'Grilled', oil: 1 },
     { key: 'airfried', label: 'Air-fried', oil: 1 },
-    { key: 'roasted', label: 'Roasted / baked', oil: 2 },
+    { key: 'roasted', label: 'Roasted (with oil)', oil: 2 },
+    { key: 'baked', label: 'Baked', oil: 0.5 },
+    { key: 'toasted', label: 'Toasted', oil: 0 },
+    { key: 'microwaved', label: 'Microwaved', oil: 0 },
+    { key: 'blanched', label: 'Blanched', oil: 0 },
+    { key: 'pressure', label: 'Pressure-cooked', oil: 0 },
+    { key: 'slowcooked', label: 'Slow-cooked', oil: 0 },
+    { key: 'sousvide', label: 'Sous vide', oil: 0 },
+    { key: 'barbecued', label: 'Barbecued', oil: 1 },
     { key: 'seared', label: 'Seared', oil: 3 },
     { key: 'sauteed', label: 'Sautéed', oil: 4 },
     { key: 'stirfried', label: 'Stir-fried', oil: 5 },
     { key: 'fried', label: 'Fried (shallow)', oil: 7 },
     { key: 'deepfried', label: 'Deep-fried', oil: 12 },
+    { key: 'confit', label: 'Confit (cooked in fat)', oil: 15 },
   ];
   const cookingOil = (key) => COOKING.find((c) => c.key === key)?.oil ?? 0;
   const cookingLabel = (key) => COOKING.find((c) => c.key === key)?.label ?? 'Plain';
