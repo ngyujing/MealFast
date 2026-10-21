@@ -211,7 +211,18 @@
     await saveSetting('activeFast', null);
     $('#fast-end-input').value = '';
     await refresh();
+    openMealForm(end);
   });
+
+  // After breaking a fast, go straight to logging what was eaten
+  function openMealForm(when) {
+    const f = $('#meal-form');
+    f.when.value = localInputValue(when);
+    $('#meal-prompt').hidden = false;
+    showTab('meals');
+    f.mealName.focus();
+    f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   $('#btn-cancel-fast').onclick = safe(async () => {
     if (!confirm('Cancel this fast without saving it?')) return;
@@ -267,7 +278,7 @@
     const events = [
       ...data.meals.map((m) => ({ type: 'meal', t: m.when, item: m })),
       ...data.fasts.map((f) => ({ type: 'fast', t: f.start, item: f })),
-    ].sort((a, b) => a.t - b.t);
+    ].sort((a, b) => b.t - a.t); // newest first
 
     if (!events.length) {
       box.append(el('p', 'muted small', 'Nothing logged yet. Log a meal or finish a fast to start your diary.'));
@@ -281,7 +292,7 @@
       days.get(key).push(e);
     }
 
-    for (const [day, evs] of [...days].reverse()) {
+    for (const [day, evs] of days) {
       const meals = evs.filter((e) => e.type === 'meal').map((e) => e.item);
       const totals = sumMacros(meals);
       const head = el('div', 'day-head');
@@ -346,6 +357,7 @@
       photo,
     });
     f.reset();
+    $('#meal-prompt').hidden = true;
     await refresh();
   });
 

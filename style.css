@@ -351,6 +351,17 @@ button.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
   transform-box: view-box;
 }
 
+/* ---------- meal prompt after breaking a fast ---------- */
+.prompt {
+  margin: -4px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
 /* ---------- day log ---------- */
 .day { margin-bottom: 14px; }
 
