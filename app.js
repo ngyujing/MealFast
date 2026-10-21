@@ -392,7 +392,7 @@
     const list = $('#food-results');
     list.replaceChildren();
     const foods = foodList();
-    $('#food-count').textContent = foods.length ? `${foods.length} foods. Tap one to fill the meal form.` : 'No foods loaded. Add them in Settings.';
+    $('#food-count').textContent = foods.length ? `${foods.length} foods. Values are a rough guide for the listed grams.` : 'No foods loaded. Add them in Settings.';
     if (!q || !foods.length) return;
     const hits = foods.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 30);
     if (!hits.length) list.append(el('li', 'muted small', 'No match.'));
@@ -402,22 +402,10 @@
         el('strong', null, `${f.name} (${f.grams} g)`),
         el('div', 'muted small', `${f.kcal} kcal · P ${f.protein} g · C ${f.carbs} g · F ${f.fat} g`),
       );
-      const li = el('li', 'item tappable');
+      const li = el('li', 'item');
       li.append(body);
-      li.onclick = () => useFood(f);
       list.append(li);
     }
-  }
-
-  function useFood(f) {
-    const form = $('#meal-form');
-    form.mealName.value = `${f.name} (${f.grams} g)`;
-    form.kcal.value = f.kcal;
-    form.protein.value = f.protein;
-    form.carbs.value = f.carbs;
-    form.fat.value = f.fat;
-    form.mealName.focus();
-    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   $('#food-search').oninput = renderFoodResults;
