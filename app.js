@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '8';
+  const APP_VERSION = '9';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -322,6 +322,7 @@
     const body = el('div', 'entry-body');
     body.append(el('strong', null, m.name), el('div', 'muted small', macroLine(m)));
     if (m.notes) body.append(el('div', 'muted small', m.notes));
+    if (m.items?.length) body.append(el('div', 'muted small', m.items.map((i) => `${i.name} ${i.grams} g`).join(' · ')));
     if (m.photo) {
       const url = URL.createObjectURL(m.photo);
       objectUrls.push(url);
@@ -365,8 +366,12 @@
       fat: numOrNull(f.fat.value),
       notes: f.notes.value.trim(),
       photo,
+      items: mealItems.map(({ food, grams }) => ({ name: food.name, grams })),
     });
     f.reset();
+    mealItems = [];
+    itemsDriveFields = false;
+    renderItems();
     $('#meal-prompt').hidden = true;
     await refresh();
   });
@@ -452,6 +457,9 @@
 
   $('#btn-clear-meal').onclick = () => {
     $('#meal-form').reset(); // also clears the photo and the time
+    mealItems = [];
+    itemsDriveFields = false;
+    renderItems();
     $('#meal-prompt').hidden = true;
     $('#meal-suggest').hidden = true;
     $('#template-status').textContent = '';
@@ -476,6 +484,84 @@
     $('#template-status').textContent = `"${name}" saved to My meals.`;
     renderAll();
   });
+
+  // ---------- food items (preset foods by weight) ----------
+  const FOODS = FOOD_PRESETS.map(([name, group, kcal, protein, carbs, fat]) => ({ name, group, kcal, protein, carbs, fat }));
+  let mealItems = []; // [{ food, grams }] for the meal being entered
+  let itemsDriveFields = false; // true while the macro fields show item totals
+
+  const round1 = (x) => Math.round(x * 10) / 10;
+
+  function itemTotals(items) {
+    return items.reduce((t, { food, grams }) => {
+      const r = grams / 100;
+      return {
+        kcal: t.kcal + food.kcal * r,
+        protein: t.protein + food.protein * r,
+        carbs: t.carbs + food.carbs * r,
+        fat: t.fat + food.fat * r,
+      };
+    }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
+  }
+
+  function populateFoodSelect() {
+    const select = $('#item-food');
+    for (const group of [...new Set(FOODS.map((f) => f.group))]) {
+      const og = document.createElement('optgroup');
+      og.label = group;
+      for (const f of FOODS.filter((x) => x.group === group)) og.append(new Option(f.name, f.name));
+      select.append(og);
+    }
+  }
+
+  function renderItems() {
+    const list = $('#item-list');
+    list.replaceChildren();
+    mealItems.forEach((it, i) => {
+      const t = itemTotals([it]);
+      const body = el('div', 'item-body');
+      body.append(
+        el('strong', null, `${it.food.name} · ${it.grams} g`),
+        el('div', 'muted small', `${Math.round(t.kcal)} kcal · P ${round1(t.protein)} g · C ${round1(t.carbs)} g · F ${round1(t.fat)} g`),
+      );
+      const remove = el('button', 'ghost small', 'Remove');
+      remove.onclick = () => {
+        mealItems.splice(i, 1);
+        renderItems();
+      };
+      const li = el('li', 'item');
+      li.append(body, remove);
+      list.append(li);
+    });
+
+    // the meal's calories and macros are the sum of its items
+    const f = $('#meal-form');
+    if (mealItems.length) {
+      const t = itemTotals(mealItems);
+      f.kcal.value = Math.round(t.kcal);
+      f.protein.value = round1(t.protein);
+      f.carbs.value = round1(t.carbs);
+      f.fat.value = round1(t.fat);
+      itemsDriveFields = true;
+    } else if (itemsDriveFields) {
+      f.kcal.value = '';
+      f.protein.value = '';
+      f.carbs.value = '';
+      f.fat.value = '';
+      itemsDriveFields = false;
+    }
+  }
+
+  $('#btn-add-item').onclick = () => {
+    const food = FOODS.find((x) => x.name === $('#item-food').value);
+    const grams = Number($('#item-grams').value);
+    if (!food || !(grams > 0)) return alert('Choose a food and enter how many grams.');
+    mealItems.push({ food, grams });
+    $('#item-grams').value = '';
+    renderItems();
+  };
+
+  populateFoodSelect();
 
   // ---------- AI photo estimate ----------
   // The key lives in this browser only; the request goes straight to Anthropic.

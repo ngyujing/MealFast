@@ -410,6 +410,30 @@ button.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
   transform-box: view-box;
 }
 
+/* ---------- food items in the meal form ---------- */
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.items-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.items-head h3 { margin: 0; }
+
+.item-add {
+  display: grid;
+  grid-template-columns: 1fr 84px auto;
+  gap: 8px;
+}
+
+.item-add button { min-height: 46px; }
+
+.items .list { gap: 8px; }
+.items .item { padding: 10px; }
+
 .form-head { display: flex; align-items: center; gap: 8px; }
 .form-head .top-btn { margin-left: auto; width: 36px; height: 36px; min-height: 36px; }
 

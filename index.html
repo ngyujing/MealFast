@@ -21,7 +21,7 @@
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
     } catch (e) { /* storage blocked: follow the system theme */ }
   </script>
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
   <header class="topbar">
@@ -91,8 +91,8 @@
       <form id="meal-form" class="card form">
         <div class="form-head">
           <h2>Log a meal</h2>
-          <button type="button" id="btn-clear-meal" class="top-btn" aria-label="Clear all fields">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          <button type="button" id="btn-clear-meal" class="top-btn" aria-label="Clear all fields" title="Clear all fields">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3l-8 10"/><path d="M7 13h8l3 8H4z"/><path d="M9 16v4M12 16v4"/></svg>
           </button>
         </div>
         <p id="meal-prompt" class="prompt" hidden>Fast ended. What did you eat?</p>
@@ -109,6 +109,19 @@
           <label>Carbs g <input type="number" name="carbs" min="0" step="0.1" inputmode="decimal"></label>
           <label>Fat g <input type="number" name="fat" min="0" step="0.1" inputmode="decimal"></label>
         </div>
+        <section class="items">
+          <div class="items-head">
+            <h3>Food items</h3>
+            <span class="muted small">values per 100 g</span>
+          </div>
+          <div class="item-add">
+            <select id="item-food" aria-label="Food"></select>
+            <input id="item-grams" type="number" min="1" step="1" inputmode="decimal" placeholder="g" aria-label="Grams">
+            <button type="button" id="btn-add-item" class="primary">Add</button>
+          </div>
+          <ul id="item-list" class="list"></ul>
+        </section>
+
         <label>Photo
           <input type="file" name="photo" accept="image/*">
         </label>
@@ -265,6 +278,7 @@
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=8"></script>
+  <script src="foods.js?v=9"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
