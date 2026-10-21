@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '3'; // bump with each release; also bump ?v= in index.html
+  const APP_VERSION = '4'; // bump with each release; also bump ?v= in index.html
   const PULL_THRESHOLD = 70;
   const DEFAULTS = { goalHours: 16, unit: 'kg', calorieTarget: 2000, activeFast: null };
   const COLORS = {
@@ -449,8 +449,8 @@
     const stats = [];
     const insights = [];
 
-    Chart.defaults.color = matchMedia('(prefers-color-scheme: dark)').matches ? '#c9d1d9' : '#4a5568';
-    Chart.defaults.borderColor = matchMedia('(prefers-color-scheme: dark)').matches ? '#2d3748' : '#e2e8f0';
+    Chart.defaults.color = isDarkTheme() ? '#c9d1d9' : '#4a5568';
+    Chart.defaults.borderColor = isDarkTheme() ? '#2d3748' : '#e2e8f0';
 
     // Fasting
     const fasts = inRange(data.fasts, 'end');
@@ -656,6 +656,32 @@
     await refresh();
   });
 
+  // ---------- theme ----------
+  // An explicit choice is stored in localStorage; without one the system setting applies.
+  function isDarkTheme() {
+    const explicit = document.documentElement.dataset.theme;
+    return explicit ? explicit === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function bindTheme() {
+    const btn = $('#btn-theme');
+    const paint = () => {
+      const dark = isDarkTheme();
+      btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+      btn.querySelector('.icon-sun').hidden = !dark;
+      btn.querySelector('.icon-moon').hidden = dark;
+      $('meta[name="theme-color"]').content = dark ? '#0c1210' : '#2f855a';
+    };
+    btn.onclick = () => {
+      const mode = isDarkTheme() ? 'light' : 'dark';
+      document.documentElement.dataset.theme = mode;
+      try { localStorage.setItem('mealfast-theme', mode); } catch { /* storage blocked */ }
+      paint();
+      if (!$('#tab-analysis').hidden) renderAnalysis(); // chart colours follow the theme
+    };
+    paint();
+  }
+
   // ---------- refresh ----------
   // Reloads the app after asking the service worker to check for a new version.
   // Stored data lives in IndexedDB and survives the reload.
@@ -730,6 +756,7 @@
     $('#range').onchange = renderAnalysis;
     bindSettings();
     $('#btn-refresh').onclick = reloadApp;
+    bindTheme();
     bindPullToRefresh();
     $('#app-version').textContent = APP_VERSION;
     if ('serviceWorker' in navigator) {
