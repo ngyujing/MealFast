@@ -410,11 +410,6 @@ button.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
   transform-box: view-box;
 }
 
-/* ---------- food reference ---------- */
-.food-ref summary { font-weight: 700; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
-.food-ref[open] { display: flex; flex-direction: column; gap: 12px; }
-.food-ref #food-results { max-height: 320px; overflow-y: auto; }
-
 /* ---------- meal prompt after breaking a fast ---------- */
 .prompt {
   margin: -4px 0 0;

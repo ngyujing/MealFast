@@ -371,61 +371,6 @@
     await refresh();
   });
 
-  // ---------- food reference ----------
-  // Rows: name, grams, kcal, protein, carbs, fat. Stored in the settings store.
-  function foodList() {
-    return data.settings.foodReference || [];
-  }
-
-  function parseFoodLine(line) {
-    const parts = line.split(/[\t,|]/).map((p) => p.trim());
-    if (parts.length < 6) return null;
-    const [name, grams, kcal, protein, carbs, fat] = parts.slice(0, 6);
-    const nums = [grams, kcal, protein, carbs, fat].map(Number);
-    if (!name || nums.some((n) => Number.isNaN(n))) return null;
-    const [g, k, p, c, f] = nums;
-    return { name, grams: g, kcal: k, protein: p, carbs: c, fat: f };
-  }
-
-  function renderFoodResults() {
-    const q = $('#food-search').value.trim().toLowerCase();
-    const list = $('#food-results');
-    list.replaceChildren();
-    const foods = foodList();
-    $('#food-count').textContent = foods.length ? `${foods.length} foods. Values are a rough guide for the listed grams.` : 'No foods loaded. Add them in Settings.';
-    if (!q || !foods.length) return;
-    const hits = foods.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 30);
-    if (!hits.length) list.append(el('li', 'muted small', 'No match.'));
-    for (const f of hits) {
-      const body = el('div', 'item-body');
-      body.append(
-        el('strong', null, `${f.name} (${f.grams} g)`),
-        el('div', 'muted small', `${f.kcal} kcal · P ${f.protein} g · C ${f.carbs} g · F ${f.fat} g`),
-      );
-      const li = el('li', 'item');
-      li.append(body);
-      list.append(li);
-    }
-  }
-
-  $('#food-search').oninput = renderFoodResults;
-
-  $('#btn-food-import').onclick = safe(async () => {
-    const lines = $('#food-import').value.split('\n');
-    const foods = lines.map(parseFoodLine).filter(Boolean);
-    if (!foods.length) return alert('No valid rows found. Each line needs: name, grams, kcal, protein, carbs, fat.');
-    await saveSetting('foodReference', foods);
-    $('#food-import').value = '';
-    alert(`Imported ${foods.length} foods. Skipped ${lines.filter((l) => l.trim()).length - foods.length} lines.`);
-    renderAll();
-  });
-
-  $('#btn-food-clear').onclick = safe(async () => {
-    if (!confirm('Clear the food reference list?')) return;
-    await saveSetting('foodReference', []);
-    renderAll();
-  });
-
   // ---------- AI photo estimate ----------
   // The key lives in this browser only; the request goes straight to Anthropic.
   function aiKey() {
@@ -741,8 +686,6 @@
     $('#set-goal').value = String(setting('goalHours'));
     $('#set-calories').value = setting('calorieTarget');
     $('#set-unit').value = setting('unit');
-    const count = foodList().length;
-    $('#food-status').textContent = count ? `${count} foods loaded.` : 'No foods loaded yet.';
   }
 
   async function renderStorage() {

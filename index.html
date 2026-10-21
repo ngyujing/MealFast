@@ -83,13 +83,6 @@
 
     <!-- MEALS -->
     <section id="tab-meals" class="panel" hidden>
-      <details class="card food-ref">
-        <summary>Food reference</summary>
-        <input id="food-search" type="search" placeholder="Search, e.g. banana" autocomplete="off">
-        <p id="food-count" class="muted small"></p>
-        <ul id="food-results" class="list"></ul>
-      </details>
-
       <form id="meal-form" class="card form">
         <h2>Log a meal</h2>
         <p id="meal-prompt" class="prompt" hidden>Fast ended. What did you eat?</p>
@@ -210,19 +203,6 @@
           <input type="file" id="import-file" accept="application/json,.json">
         </label>
         <button id="btn-clear" class="danger big-btn">Delete all data in this browser</button>
-      </div>
-
-      <div class="card form">
-        <h2>Food reference data</h2>
-        <p class="muted small">
-          Paste the food table here, one food per line:
-          name, grams, kcal, protein, carbs, fat. Commas, tabs or | all work.
-          Pasting replaces the current list.
-        </p>
-        <textarea id="food-import" rows="6" placeholder="Banana, 100, 89, 1.1, 22.8, 0.3"></textarea>
-        <button id="btn-food-import" class="primary big-btn">Import foods</button>
-        <button id="btn-food-clear" class="danger">Clear food list</button>
-        <p id="food-status" class="muted small"></p>
       </div>
 
       <div class="card form">
