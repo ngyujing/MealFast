@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '14';
+  const APP_VERSION = '15';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
