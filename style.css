@@ -431,6 +431,13 @@ button.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
 
 .item-add button { min-height: 46px; }
 
+/* locked macro fields show item totals */
+input[readonly] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
 .items .list { gap: 8px; }
 .items .item { padding: 10px; }
 

@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '9';
+  const APP_VERSION = '10';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -398,10 +398,12 @@
   function fillMealForm(item) {
     const f = $('#meal-form');
     f.mealName.value = item.name;
-    f.kcal.value = item.kcal ?? '';
-    f.protein.value = item.protein ?? '';
-    f.carbs.value = item.carbs ?? '';
-    f.fat.value = item.fat ?? '';
+    if (!mealItems.length) { // with food items, the macros come from the items
+      f.kcal.value = item.kcal ?? '';
+      f.protein.value = item.protein ?? '';
+      f.carbs.value = item.carbs ?? '';
+      f.fat.value = item.fat ?? '';
+    }
     $('#meal-suggest').hidden = true;
     f.mealName.focus();
   }
@@ -534,9 +536,15 @@
       list.append(li);
     });
 
-    // the meal's calories and macros are the sum of its items
+    // with items, calories and macros are their totals and locked;
+    // without items they are typed in by hand
     const f = $('#meal-form');
-    if (mealItems.length) {
+    const locked = mealItems.length > 0;
+    for (const name of ['kcal', 'protein', 'carbs', 'fat']) f[name].readOnly = locked;
+    $('#macro-hint').textContent = locked
+      ? 'Calories and macros add up from your food items.'
+      : 'No food items: type calories and macros by hand, or add items above.';
+    if (locked) {
       const t = itemTotals(mealItems);
       f.kcal.value = Math.round(t.kcal);
       f.protein.value = round1(t.protein);
@@ -550,6 +558,7 @@
       f.fat.value = '';
       itemsDriveFields = false;
     }
+    refreshEstimateUi();
   }
 
   $('#btn-add-item').onclick = () => {
@@ -611,7 +620,7 @@
   function refreshEstimateUi() {
     const f = $('#meal-form');
     const hasPhoto = Boolean(f.photo.files[0]);
-    $('#btn-estimate').hidden = !(hasPhoto && aiKey());
+    $('#btn-estimate').hidden = !(hasPhoto && aiKey() && !mealItems.length);
     $('#ai-status').textContent = aiKey()
       ? 'A key is saved in this browser.'
       : 'No key saved. Photo estimates are off.';
@@ -1054,6 +1063,7 @@
     bindPullToRefresh();
     $('#app-version').textContent = APP_VERSION;
     refreshEstimateUi();
+    renderItems();
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }

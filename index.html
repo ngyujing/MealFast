@@ -21,7 +21,7 @@
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
     } catch (e) { /* storage blocked: follow the system theme */ }
   </script>
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
   <header class="topbar">
@@ -103,6 +103,7 @@
           <input name="mealName" required placeholder="e.g. Chicken rice" autocomplete="off">
         </label>
         <div id="meal-suggest" class="suggest" hidden></div>
+        <p id="macro-hint" class="muted small"></p>
         <div class="grid4">
           <label>kcal <input type="number" name="kcal" min="0" step="1" inputmode="numeric"></label>
           <label>Protein g <input type="number" name="protein" min="0" step="0.1" inputmode="decimal"></label>
@@ -279,6 +280,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="foods.js?v=9"></script>
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
