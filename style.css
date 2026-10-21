@@ -425,9 +425,11 @@ button.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
 
 .item-add {
   display: grid;
-  grid-template-columns: 1fr 84px auto;
+  grid-template-columns: 84px 1fr auto;
   gap: 8px;
 }
+
+.item-add .wide { grid-column: 1 / -1; }
 
 .item-add button { min-height: 46px; }
 

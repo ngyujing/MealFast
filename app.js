@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '12';
+  const APP_VERSION = '13';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -322,7 +322,7 @@
     const body = el('div', 'entry-body');
     body.append(el('strong', null, m.name), el('div', 'muted small', macroLine(m)));
     if (m.notes) body.append(el('div', 'muted small', m.notes));
-    if (m.items?.length) body.append(el('div', 'muted small', m.items.map((i) => `${i.name} ${i.grams} g`).join(' · ')));
+    if (m.items?.length) body.append(el('div', 'muted small', m.items.map((i) => `${i.name} ${i.grams} g${i.method && i.method !== 'Plain' ? ` (${i.method})` : ''}`).join(' · ')));
     if (m.photo) {
       const url = URL.createObjectURL(m.photo);
       objectUrls.push(url);
@@ -366,7 +366,7 @@
       fat: numOrNull(f.fat.value),
       notes: f.notes.value.trim(),
       photo,
-      items: mealItems.map(({ food, grams }) => ({ name: food.name, grams })),
+      items: mealItems.map(({ food, grams, method }) => ({ name: food.name, grams, method: cookingLabel(method) })),
     });
     f.reset();
     mealItems = [];
@@ -492,16 +492,37 @@
   let mealItems = []; // [{ food, grams }] for the meal being entered
   let itemsDriveFields = false; // true while the macro fields show item totals
 
+  // Cooking styles add an estimated amount of cooking oil (grams per 100 g of food).
+  // Oil is 884 kcal per 100 g and all fat. Rough estimates, not measured values.
+  const COOKING = [
+    { key: 'plain', label: 'Plain', oil: 0 },
+    { key: 'boiled', label: 'Boiled / steamed', oil: 0 },
+    { key: 'poached', label: 'Poached', oil: 0 },
+    { key: 'stewed', label: 'Stewed / braised', oil: 0.5 },
+    { key: 'smoked', label: 'Smoked', oil: 0 },
+    { key: 'grilled', label: 'Grilled', oil: 1 },
+    { key: 'airfried', label: 'Air-fried', oil: 1 },
+    { key: 'roasted', label: 'Roasted / baked', oil: 2 },
+    { key: 'seared', label: 'Seared', oil: 3 },
+    { key: 'sauteed', label: 'Sautéed', oil: 4 },
+    { key: 'stirfried', label: 'Stir-fried', oil: 5 },
+    { key: 'fried', label: 'Fried (shallow)', oil: 7 },
+    { key: 'deepfried', label: 'Deep-fried', oil: 12 },
+  ];
+  const cookingOil = (key) => COOKING.find((c) => c.key === key)?.oil ?? 0;
+  const cookingLabel = (key) => COOKING.find((c) => c.key === key)?.label ?? 'Plain';
+
   const round1 = (x) => Math.round(x * 10) / 10;
 
   function itemTotals(items) {
-    return items.reduce((t, { food, grams }) => {
+    return items.reduce((t, { food, grams, method }) => {
       const r = grams / 100;
+      const oil = cookingOil(method);
       return {
-        kcal: t.kcal + food.kcal * r,
+        kcal: t.kcal + (food.kcal + oil * 8.84) * r,
         protein: t.protein + food.protein * r,
         carbs: t.carbs + food.carbs * r,
-        fat: t.fat + food.fat * r,
+        fat: t.fat + (food.fat + oil) * r,
       };
     }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
   }
@@ -513,7 +534,7 @@
       const t = itemTotals([it]);
       const body = el('div', 'item-body');
       body.append(
-        el('strong', null, `${it.food.name} · ${it.grams} g`),
+        el('strong', null, `${it.food.name} · ${cookingLabel(it.method)} · ${it.grams} g`),
         el('div', 'muted small', `${Math.round(t.kcal)} kcal · P ${round1(t.protein)} g · C ${round1(t.carbs)} g · F ${round1(t.fat)} g`),
       );
       const remove = el('button', 'ghost small', 'Remove');
@@ -551,6 +572,11 @@
     refreshEstimateUi();
   }
 
+  function populateMethodSelect() {
+    const select = $('#item-method');
+    for (const c of COOKING) select.append(new Option(c.label, c.key));
+  }
+
   // Type to search; tap a match to select it, then enter grams and Add
   function renderItemSuggest() {
     const box = $('#item-suggest');
@@ -575,6 +601,7 @@
   }
 
   $('#item-search').oninput = renderItemSuggest;
+  populateMethodSelect();
 
   $('#btn-add-item').onclick = () => {
     const typed = $('#item-search').value.trim().toLowerCase();
@@ -582,7 +609,7 @@
     const grams = Number($('#item-grams').value);
     if (!food) return alert('Pick a food from the list.');
     if (!(grams > 0)) return alert('Enter how many grams.');
-    mealItems.push({ food, grams });
+    mealItems.push({ food, grams, method: $('#item-method').value });
     $('#item-search').value = '';
     $('#item-grams').value = '';
     $('#item-suggest').hidden = true;

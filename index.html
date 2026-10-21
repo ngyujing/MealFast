@@ -21,7 +21,7 @@
       if (savedTheme) document.documentElement.dataset.theme = savedTheme;
     } catch (e) { /* storage blocked: follow the system theme */ }
   </script>
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
   <header class="topbar">
@@ -109,11 +109,12 @@
             <span class="muted small">values per 100 g</span>
           </div>
           <div class="item-add">
-            <input id="item-search" type="search" placeholder="Type a food, e.g. chicken" autocomplete="off" aria-label="Search foods">
+            <input id="item-search" type="search" class="wide" placeholder="Type a food, e.g. chicken" autocomplete="off" aria-label="Search foods">
+            <div id="item-suggest" class="suggest wide" hidden></div>
             <input id="item-grams" type="number" min="1" step="1" inputmode="decimal" placeholder="g" aria-label="Grams">
+            <select id="item-method" aria-label="Cooking style"></select>
             <button type="button" id="btn-add-item" class="primary">Add</button>
           </div>
-          <div id="item-suggest" class="suggest" hidden></div>
           <ul id="item-list" class="list"></ul>
         </section>
         <p id="macro-hint" class="muted small"></p>
@@ -280,6 +281,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="foods.js?v=9"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>
