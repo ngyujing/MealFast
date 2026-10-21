@@ -410,7 +410,7 @@ button.small { min-height: 36px; padding: 6px 12px; font-size: 0.85rem; }
   transform-box: view-box;
 }
 
-/* ---------- food items in the meal form ---------- */
+/* ---------- ingredients in the meal form ---------- */
 .items {
   display: flex;
   flex-direction: column;

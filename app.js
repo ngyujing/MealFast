@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '11';
+  const APP_VERSION = '12';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -398,7 +398,7 @@
   function fillMealForm(item) {
     const f = $('#meal-form');
     f.mealName.value = item.name;
-    if (!mealItems.length) { // with food items, the macros come from the items
+    if (!mealItems.length) { // with ingredients, the macros come from them
       f.kcal.value = item.kcal ?? '';
       f.protein.value = item.protein ?? '';
       f.carbs.value = item.carbs ?? '';
@@ -487,7 +487,7 @@
     renderAll();
   });
 
-  // ---------- food items (preset foods by weight) ----------
+  // ---------- ingredients (preset foods by weight) ----------
   const FOODS = FOOD_PRESETS.map(([name, group, kcal, protein, carbs, fat]) => ({ name, group, kcal, protein, carbs, fat }));
   let mealItems = []; // [{ food, grams }] for the meal being entered
   let itemsDriveFields = false; // true while the macro fields show item totals
@@ -532,8 +532,8 @@
     const locked = mealItems.length > 0;
     for (const name of ['kcal', 'protein', 'carbs', 'fat']) f[name].readOnly = locked;
     $('#macro-hint').textContent = locked
-      ? 'Calories and macros add up from your food items.'
-      : 'No food items: type calories and macros by hand, or add items above.';
+      ? 'Calories and macros add up from your ingredients.'
+      : 'No ingredients: type calories and macros by hand, or add ingredients above.';
     if (locked) {
       const t = itemTotals(mealItems);
       f.kcal.value = Math.round(t.kcal);
