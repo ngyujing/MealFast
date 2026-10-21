@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '10';
+  const APP_VERSION = '11';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -506,16 +506,6 @@
     }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
   }
 
-  function populateFoodSelect() {
-    const select = $('#item-food');
-    for (const group of [...new Set(FOODS.map((f) => f.group))]) {
-      const og = document.createElement('optgroup');
-      og.label = group;
-      for (const f of FOODS.filter((x) => x.group === group)) og.append(new Option(f.name, f.name));
-      select.append(og);
-    }
-  }
-
   function renderItems() {
     const list = $('#item-list');
     list.replaceChildren();
@@ -561,16 +551,44 @@
     refreshEstimateUi();
   }
 
-  $('#btn-add-item').onclick = () => {
-    const food = FOODS.find((x) => x.name === $('#item-food').value);
-    const grams = Number($('#item-grams').value);
-    if (!food || !(grams > 0)) return alert('Choose a food and enter how many grams.');
-    mealItems.push({ food, grams });
-    $('#item-grams').value = '';
-    renderItems();
-  };
+  // Type to search; tap a match to select it, then enter grams and Add
+  function renderItemSuggest() {
+    const box = $('#item-suggest');
+    const q = $('#item-search').value.trim().toLowerCase();
+    box.replaceChildren();
+    const starts = (f) => f.name.toLowerCase().startsWith(q);
+    const hits = q
+      ? FOODS.filter((f) => f.name.toLowerCase().includes(q)).sort((a, b) => Number(starts(b)) - Number(starts(a))).slice(0, 8)
+      : [];
+    box.hidden = !hits.length;
+    for (const food of hits) {
+      const btn = el('button', 'suggest-item');
+      btn.type = 'button';
+      btn.append(el('span', null, food.name), el('small', null, `${food.group} · ${food.kcal} kcal per 100 g`));
+      btn.onclick = () => {
+        $('#item-search').value = food.name;
+        box.hidden = true;
+        $('#item-grams').focus();
+      };
+      box.append(btn);
+    }
+  }
 
-  populateFoodSelect();
+  $('#item-search').oninput = renderItemSuggest;
+
+  $('#btn-add-item').onclick = () => {
+    const typed = $('#item-search').value.trim().toLowerCase();
+    const food = FOODS.find((x) => x.name.toLowerCase() === typed);
+    const grams = Number($('#item-grams').value);
+    if (!food) return alert('Pick a food from the list.');
+    if (!(grams > 0)) return alert('Enter how many grams.');
+    mealItems.push({ food, grams });
+    $('#item-search').value = '';
+    $('#item-grams').value = '';
+    $('#item-suggest').hidden = true;
+    renderItems();
+    $('#item-search').focus();
+  };
 
   // ---------- AI photo estimate ----------
   // The key lives in this browser only; the request goes straight to Anthropic.
