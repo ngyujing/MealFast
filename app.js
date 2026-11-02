@@ -5,7 +5,7 @@
   const DAY = 86400e3;
   const KG_PER_LB = 0.45359237;
   const LB_PER_KG = 1 / KG_PER_LB;
-  const APP_VERSION = '16';
+  const APP_VERSION = '17';
   const AI_MODEL = 'claude-sonnet-5-5';
   const ESTIMATE_PROMPT = [
     'Estimate the nutrition of the meal in this photo.',
@@ -488,13 +488,14 @@
   });
 
   // ---------- ingredients (preset foods by weight) ----------
-  const FOODS = FOOD_PRESETS.map(([name, group, kcal, protein, carbs, fat]) => ({ name, group, kcal, protein, carbs, fat }));
+  const FOODS = FOOD_PRESETS.map(([name, group, kcal, protein, carbs, fat, set]) => ({ name, group, kcal, protein, carbs, fat, set }));
   let mealItems = []; // [{ food, grams }] for the meal being entered
   let itemsDriveFields = false; // true while the macro fields show item totals
 
   // Cooking styles add an estimated amount of cooking oil (grams per 100 g of food).
   // Oil is 884 kcal per 100 g and all fat. Rough estimates, not measured values.
   const COOKING = [
+    { key: 'asis', label: 'As is (no cooking)', oil: 0 },
     { key: 'boiled', label: 'Boiled / steamed', oil: 0 },
     { key: 'poached', label: 'Poached', oil: 0 },
     { key: 'stewed', label: 'Stewed / braised', oil: 0.5 },
@@ -518,7 +519,35 @@
     { key: 'confit', label: 'Confit (cooked in fat)', oil: 15 },
   ];
   const cookingOil = (key) => COOKING.find((c) => c.key === key)?.oil ?? 0;
-  const cookingLabel = (key) => COOKING.find((c) => c.key === key)?.label ?? 'Plain';
+  const cookingLabel = (key) => COOKING.find((c) => c.key === key)?.label ?? 'As is (no cooking)';
+
+  // Which cooking styles make sense for each kind of food; the first one is the default
+  const COOKING_SETS = {
+    meat: ['boiled', 'poached', 'stewed', 'smoked', 'grilled', 'airfried', 'roasted', 'barbecued', 'seared', 'sauteed', 'stirfried', 'fried', 'deepfried', 'confit', 'sousvide', 'pressure', 'slowcooked', 'microwaved'],
+    deli: ['asis', 'grilled', 'fried', 'baked', 'airfried', 'microwaved'],
+    fish: ['boiled', 'poached', 'smoked', 'grilled', 'airfried', 'roasted', 'barbecued', 'seared', 'sauteed', 'stirfried', 'fried', 'deepfried', 'sousvide', 'pressure', 'microwaved', 'baked'],
+    fishasis: ['asis', 'grilled', 'baked', 'fried', 'airfried'],
+    egg: ['boiled', 'poached', 'fried', 'sauteed', 'baked', 'microwaved'],
+    dairy: ['asis', 'grilled', 'fried', 'baked', 'microwaved'],
+    tofu: ['asis', 'boiled', 'grilled', 'airfried', 'fried', 'deepfried', 'seared', 'sauteed', 'stirfried', 'barbecued', 'baked', 'roasted'],
+    veg: ['boiled', 'stewed', 'pressure', 'microwaved', 'blanched', 'roasted', 'baked', 'grilled', 'airfried', 'barbecued', 'seared', 'sauteed', 'stirfried', 'fried', 'deepfried'],
+    rawveg: ['asis', 'stirfried', 'sauteed', 'grilled', 'microwaved'],
+    fruit: ['asis', 'baked', 'grilled', 'microwaved'],
+    legume: ['asis', 'boiled', 'pressure', 'stewed', 'sauteed', 'microwaved'],
+    dip: ['asis'],
+    grain: ['asis', 'boiled', 'pressure', 'microwaved', 'stirfried', 'sauteed', 'baked', 'fried'],
+    noodle: ['asis', 'boiled', 'pressure', 'stirfried', 'sauteed', 'fried', 'microwaved', 'baked'],
+    bread: ['asis', 'toasted', 'baked', 'grilled', 'fried', 'airfried', 'microwaved'],
+    pastry: ['asis', 'baked', 'microwaved', 'fried', 'deepfried'],
+    cereal: ['asis', 'boiled', 'baked', 'toasted', 'microwaved'],
+    potato: ['boiled', 'pressure', 'microwaved', 'roasted', 'baked', 'airfried', 'fried', 'deepfried', 'stirfried', 'sauteed', 'seared', 'barbecued'],
+    snack: ['asis', 'baked', 'microwaved', 'toasted', 'fried'],
+    sweet: ['asis'],
+    pizza: ['asis', 'baked', 'microwaved', 'grilled'],
+    fat: ['asis'],
+    nuts: ['asis', 'roasted', 'toasted', 'baked', 'microwaved'],
+    drink: ['asis'],
+  };
 
   const round1 = (x) => Math.round(x * 10) / 10;
 
@@ -580,13 +609,24 @@
     refreshEstimateUi();
   }
 
-  function populateMethodSelect() {
+  // Offer only the cooking styles that fit the food being typed
+  function refreshMethodOptions() {
     const select = $('#item-method');
-    for (const c of COOKING) select.append(new Option(c.label, c.key));
+    const typed = $('#item-search').value.trim().toLowerCase();
+    const food = FOODS.find((x) => x.name.toLowerCase() === typed);
+    const allowed = food ? COOKING_SETS[food.set] : COOKING.map((c) => c.key);
+    const current = select.value;
+    select.replaceChildren(...COOKING.filter((c) => allowed.includes(c.key)).map((c) => new Option(c.label, c.key)));
+    if (allowed.includes(current)) select.value = current;
+  }
+
+  function populateMethodSelect() {
+    refreshMethodOptions();
   }
 
   // Type to search; tap a match to select it, then enter grams and Add
   function renderItemSuggest() {
+    refreshMethodOptions();
     const box = $('#item-suggest');
     const q = $('#item-search').value.trim().toLowerCase();
     box.replaceChildren();
@@ -601,6 +641,7 @@
       btn.append(el('span', null, food.name), el('small', null, `${food.group} · ${food.kcal} kcal per 100 g`));
       btn.onclick = () => {
         $('#item-search').value = food.name;
+        refreshMethodOptions();
         box.hidden = true;
         $('#item-grams').focus();
       };
